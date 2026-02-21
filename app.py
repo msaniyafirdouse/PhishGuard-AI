@@ -11,6 +11,12 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 
+import joblib
+
+email_model = joblib.load("models/email_model.pkl")
+tfidf = joblib.load("models/tfidf.pkl")
+url_model = joblib.load("models/url_model.pkl")
+
 # Check if models exist
 if os.path.exists("models/email_model.pkl"):
     email_model = joblib.load("models/email_model.pkl")
