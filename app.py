@@ -1,77 +1,18 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import joblib
 import re
 import numpy as np
+import os
 
 app = Flask(__name__)
 
-import os
-import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+# Load trained models safely
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-import joblib
-from flask import render_template
+email_model = joblib.load(os.path.join(BASE_DIR, "models", "email_model.pkl"))
+tfidf = joblib.load(os.path.join(BASE_DIR, "models", "tfidf.pkl"))
+url_model = joblib.load(os.path.join(BASE_DIR, "models", "url_model.pkl"))
 
-email_model = joblib.load("models/email_model.pkl")
-tfidf = joblib.load("models/tfidf.pkl")
-url_model = joblib.load("models/url_model.pkl")
-
-# Check if models exist
-if os.path.exists("models/email_model.pkl"):
-    email_model = joblib.load("models/email_model.pkl")
-    tfidf = joblib.load("models/tfidf.pkl")
-    url_model = joblib.load("models/url_model.pkl")
-
-else:
-    print("Models not found. Training models...")
-
-    os.makedirs("models", exist_ok=True)
-
-    # Train Email Model
-    email_df = pd.read_csv("https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_DATA_REPO/main/emails.csv")
-
-    X_email = email_df["text_combined"]
-    y_email = email_df["label"]
-
-    tfidf = TfidfVectorizer(max_features=5000)
-    X_email_vec = tfidf.fit_transform(X_email)
-
-    email_model = LogisticRegression()
-    email_model.fit(X_email_vec, y_email)
-
-    joblib.dump(email_model, "models/email_model.pkl")
-    joblib.dump(tfidf, "models/tfidf.pkl")
-
-    # Train URL Model
-    url_df = pd.read_csv("https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_DATA_REPO/main/urls.csv")
-
-    url_df["Label"] = url_df["Label"].map({"good": 0, "bad": 1})
-
-    def extract_features(url):
-        url = str(url)
-        return [
-            len(url),
-            url.count("."),
-            url.count("-"),
-            url.count("/"),
-            sum(c.isdigit() for c in url),
-            1 if "@" in url else 0,
-            1 if "https" in url else 0,
-            1 if re.search(r"\d+\.\d+\.\d+\.\d+", url) else 0,
-            1 if any(word in url.lower() for word in ["login","verify","update","bank","secure"]) else 0
-        ]
-
-    X_url = url_df["URL"].apply(extract_features).tolist()
-    y_url = url_df["Label"]
-
-    url_model = RandomForestClassifier(n_estimators=200)
-    url_model.fit(X_url, y_url)
-
-    joblib.dump(url_model, "models/url_model.pkl")
-
-    print("Models trained successfully.")
 
 # URL feature extractor
 def extract_features(url):
@@ -86,13 +27,17 @@ def extract_features(url):
     features["has_at"] = 1 if "@" in url else 0
     features["has_https"] = 1 if "https" in url else 0
     features["has_ip"] = 1 if re.search(r"\d+\.\d+\.\d+\.\d+", url) else 0
-    features["suspicious_words"] = 1 if any(word in url.lower() for word in ["login", "verify", "update", "bank", "secure"]) else 0
+    features["suspicious_words"] = 1 if any(
+        word in url.lower() for word in ["login", "verify", "update", "bank", "secure"]
+    ) else 0
 
     return np.array(list(features.values())).reshape(1, -1)
+
 
 @app.route("/")
 def home():
     return render_template("index.html")
+
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
@@ -126,7 +71,6 @@ def analyze():
         "classification": classification
     })
 
-import os
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
