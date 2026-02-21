@@ -12,6 +12,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 
 import joblib
+from flask import render_template
 
 email_model = joblib.load("models/email_model.pkl")
 tfidf = joblib.load("models/tfidf.pkl")
@@ -91,7 +92,7 @@ def extract_features(url):
 
 @app.route("/")
 def home():
-    return "PhishGuard AI Backend is Running Successfully 🚀"
+    return render_template("index.html")
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
