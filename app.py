@@ -89,6 +89,10 @@ def extract_features(url):
 
     return np.array(list(features.values())).reshape(1, -1)
 
+@app.route("/")
+def home():
+    return "PhishGuard AI Backend is Running Successfully 🚀"
+
 @app.route("/analyze", methods=["POST"])
 def analyze():
     data = request.json
