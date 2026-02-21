@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PhishGuard AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: radial-gradient(circle at top left, #1e3a8a, #0f172a 60%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: white;
+}
+
+.container {
+    width: 90%;
+    max-width: 750px;
+    padding: 40px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: 0.3s;
+}
+
+.container:hover {
+    transform: scale(1.02);
+}
+
+h1 {
+    text-align: center;
+    font-size: 28px;
+    margin-bottom: 30px;
+}
+
+textarea, input {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    border: none;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    font-size: 14px;
+}
+
+textarea::placeholder,
+input::placeholder {
+    color: #cbd5e1;
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    box-shadow: 0 0 15px #22c55e;
+}
+
+.result {
+    margin-top: 25px;
+}
+
+.risk-bar {
+    height: 22px;
+    border-radius: 15px;
+    background: #1e293b;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.risk-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.6s ease-in-out;
+}
+
+.safe { background: #22c55e; }
+.suspicious { background: #facc15; }
+.phishing { background: #ef4444; }
+
+.classification {
+    margin-top: 15px;
+    font-size: 22px;
+    font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🛡 PhishGuard AI</h1>
+
+    <label>Email Content</label>
+    <textarea id="emailText" rows="5" placeholder="Paste Email Content Here..."></textarea>
+
+    <label>URL</label>
+    <input type="text" id="urlInput" placeholder="Enter URL Here..." />
+
+    <button onclick="analyze()">Analyze Threat</button>
+
+    <div class="result" id="result" style="display:none;">
+        <p>Risk Score: <span id="riskScore"></span></p>
+        <div class="risk-bar">
+            <div id="riskFill" class="risk-fill"></div>
+        </div>
+
+        <p>Email Probability: <span id="emailProb"></span></p>
+        <p>URL Probability: <span id="urlProb"></span></p>
+
+        <div id="classification" class="classification"></div>
+    </div>
+</div>
+
+<script>
+function analyze() {
+    const emailText = document.getElementById("emailText").value;
+    const url = document.getElementById("urlInput").value;
+
+    fetch("http://127.0.0.1:5000/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            email_text: emailText,
+            url: url
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById("result").style.display = "block";
+
+        document.getElementById("riskScore").innerText = data.risk_score;
+        document.getElementById("emailProb").innerText = data.email_probability;
+        document.getElementById("urlProb").innerText = data.url_probability;
+
+        const fill = document.getElementById("riskFill");
+        fill.style.width = data.risk_score + "%";
+
+        const classDiv = document.getElementById("classification");
+
+        if (data.classification === "Safe") {
+            fill.className = "risk-fill safe";
+            classDiv.innerText = "Safe";
+            classDiv.style.color = "#22c55e";
+        } 
+        else if (data.classification === "Suspicious") {
+            fill.className = "risk-fill suspicious";
+            classDiv.innerText = "Suspicious";
+            classDiv.style.color = "#facc15";
+        } 
+        else {
+            fill.className = "risk-fill phishing";
+            classDiv.innerText = "Phishing";
+            classDiv.style.color = "#ef4444";
+        }
+    });
+}
+</script>
+
+</body>
+</html>
