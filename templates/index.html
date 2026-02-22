@@ -1,136 +1,184 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>PhishGuard AI</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhishGuard AI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
+<style>
+
 body {
     margin: 0;
     font-family: 'Segoe UI', sans-serif;
-    background: radial-gradient(circle at top left, #1e3a8a, #0f172a 60%);
+    background: radial-gradient(circle at 20% 20%, #111827, #000000 70%);
+    color: white;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    color: white;
+    overflow: hidden;
+}
+
+/* Subtle red glow background */
+body::before {
+    content: "";
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(255,0,60,0.2), transparent 70%);
+    top: -150px;
+    right: -150px;
+    z-index: 0;
 }
 
 .container {
+    position: relative;
+    z-index: 1;
     width: 90%;
-    max-width: 750px;
-    padding: 40px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(25px);
+    max-width: 850px;
+    padding: 50px;
+    border-radius: 25px;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(30px);
     border: 1px solid rgba(255,255,255,0.1);
-    transition: 0.3s;
-}
-
-.container:hover {
-    transform: scale(1.02);
+    box-shadow: 0 0 50px rgba(255,0,60,0.1);
 }
 
 h1 {
     text-align: center;
-    font-size: 28px;
-    margin-bottom: 30px;
+    font-size: 34px;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #9ca3af;
+    margin-bottom: 40px;
 }
 
 textarea, input {
     width: 100%;
-    padding: 14px;
+    padding: 15px;
     margin-bottom: 20px;
-    border-radius: 10px;
+    border-radius: 12px;
     border: none;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.08);
     color: white;
     font-size: 14px;
 }
 
 textarea::placeholder,
 input::placeholder {
-    color: #cbd5e1;
+    color: #9ca3af;
 }
 
 button {
     width: 100%;
-    padding: 14px;
-    border-radius: 10px;
+    padding: 15px;
+    border-radius: 12px;
     border: none;
     font-size: 16px;
     font-weight: bold;
-    background: linear-gradient(90deg, #22c55e, #16a34a);
+    background: linear-gradient(90deg, #ef4444, #b91c1c);
     cursor: pointer;
     transition: 0.3s;
 }
 
 button:hover {
-    box-shadow: 0 0 15px #22c55e;
+    box-shadow: 0 0 20px rgba(239,68,68,0.6);
 }
 
-.result {
-    margin-top: 25px;
+/* Risk Meter Circle */
+.meter-container {
+    margin-top: 35px;
+    text-align: center;
+    display: none;
 }
 
-.risk-bar {
-    height: 22px;
-    border-radius: 15px;
-    background: #1e293b;
-    overflow: hidden;
-    margin-top: 10px;
+.circle {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: conic-gradient(#ef4444 0deg, #1f2937 0deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    position: relative;
+    transition: 1s ease;
 }
 
-.risk-fill {
-    height: 100%;
-    width: 0%;
-    transition: width 0.6s ease-in-out;
+.circle::before {
+    content: "";
+    width: 120px;
+    height: 120px;
+    background: #0f172a;
+    border-radius: 50%;
+    position: absolute;
 }
 
-.safe { background: #22c55e; }
-.suspicious { background: #facc15; }
-.phishing { background: #ef4444; }
+#riskPercent {
+    position: relative;
+    font-size: 26px;
+    font-weight: bold;
+}
 
 .classification {
     margin-top: 15px;
     font-size: 22px;
     font-weight: bold;
 }
+
+/* Explainable AI Box */
+.analysis-box {
+    margin-top: 25px;
+    padding: 20px;
+    border-radius: 15px;
+    background: rgba(255,255,255,0.05);
+    display: none;
+}
+
+.analysis-box h3 {
+    margin-bottom: 10px;
+}
+
+.analysis-box ul {
+    padding-left: 20px;
+    color: #d1d5db;
+}
+
 </style>
 </head>
+
 <body>
 
 <div class="container">
-    <h1>🛡 PhishGuard AI</h1>
 
-    <label>Email Content</label>
-    <textarea id="emailText" rows="5" placeholder="Paste Email Content Here..."></textarea>
+<h1>🛡 PhishGuard AI</h1>
+<p class="subtitle">AI-Powered Phishing Intelligence</p>
 
-    <label>URL</label>
-    <input type="text" id="urlInput" placeholder="Enter URL Here..." />
+<textarea id="emailText" rows="4" placeholder="Paste email, SMS, or message..."></textarea>
+<input type="text" id="urlInput" placeholder="Enter URL (optional)" />
 
-    <button onclick="analyze()">Analyze Threat</button>
+<button onclick="analyze()">Scan Threat</button>
 
-    <div class="result" id="result" style="display:none;">
-        <p>Risk Score: <span id="riskScore"></span></p>
-        <div class="risk-bar">
-            <div id="riskFill" class="risk-fill"></div>
-        </div>
-
-        <p>Email Probability: <span id="emailProb"></span></p>
-        <p>URL Probability: <span id="urlProb"></span></p>
-
-        <div id="classification" class="classification"></div>
-        <div id="reasonsBox" style="margin-top:20px; display:none;">
-    <h3 style="margin-bottom:10px;">🔍 Threat Analysis</h3>
-    <ul id="reasonsList" style="padding-left:20px; color:#cbd5e1;"></ul>
-</div>
+<div class="meter-container" id="meterContainer">
+    <div class="circle" id="riskCircle">
+        <div id="riskPercent">0%</div>
     </div>
+    <div id="classification" class="classification"></div>
+</div>
+
+<div class="analysis-box" id="analysisBox">
+    <h3>🔍 Threat Analysis</h3>
+    <ul id="reasonsList"></ul>
+</div>
+
 </div>
 
 <script>
+
 function analyze() {
+
     const emailText = document.getElementById("emailText").value;
     const url = document.getElementById("urlInput").value;
 
@@ -144,53 +192,51 @@ function analyze() {
     })
     .then(response => response.json())
     .then(data => {
-        document.getElementById("result").style.display = "block";
 
-        document.getElementById("riskScore").innerText = data.risk_score;
-        document.getElementById("emailProb").innerText = data.email_probability;
-        document.getElementById("urlProb").innerText = data.url_probability;
+        const meterContainer = document.getElementById("meterContainer");
+        const circle = document.getElementById("riskCircle");
+        const percent = document.getElementById("riskPercent");
+        const classification = document.getElementById("classification");
 
-        const fill = document.getElementById("riskFill");
-        fill.style.width = data.risk_score + "%";
+        meterContainer.style.display = "block";
 
-        const classDiv = document.getElementById("classification");
+        const degree = data.risk_score * 3.6;
+        circle.style.background = `conic-gradient(#ef4444 ${degree}deg, #1f2937 ${degree}deg)`;
+
+        percent.innerText = data.risk_score + "%";
 
         if (data.classification === "Safe") {
-            fill.className = "risk-fill safe";
-            classDiv.innerText = "Safe";
-            classDiv.style.color = "#22c55e";
-        } 
-        else if (data.classification === "Suspicious") {
-            fill.className = "risk-fill suspicious";
-            classDiv.innerText = "Suspicious";
-            classDiv.style.color = "#facc15";
-        } 
-        else {
-            fill.className = "risk-fill phishing";
-            classDiv.innerText = "Phishing";
-            classDiv.style.color = "#ef4444";
+            classification.innerText = "Safe";
+            classification.style.color = "#22c55e";
+        } else if (data.classification === "Suspicious") {
+            classification.innerText = "Suspicious";
+            classification.style.color = "#facc15";
+        } else {
+            classification.innerText = "Phishing";
+            classification.style.color = "#ef4444";
         }
 
-        // Show Explainable AI reasons
-const reasonsBox = document.getElementById("reasonsBox");
-const reasonsList = document.getElementById("reasonsList");
+        // Show Explainable AI
+        const analysisBox = document.getElementById("analysisBox");
+        const reasonsList = document.getElementById("reasonsList");
 
-reasonsList.innerHTML = "";
+        reasonsList.innerHTML = "";
 
-if (data.reasons && data.reasons.length > 0) {
-    reasonsBox.style.display = "block";
+        if (data.reasons && data.reasons.length > 0) {
+            analysisBox.style.display = "block";
 
-    data.reasons.forEach(reason => {
-        const li = document.createElement("li");
-        li.innerText = reason;
-        reasonsList.appendChild(li);
+            data.reasons.forEach(reason => {
+                const li = document.createElement("li");
+                li.innerText = reason;
+                reasonsList.appendChild(li);
+            });
+        } else {
+            analysisBox.style.display = "none";
+        }
+
     });
-} else {
-    reasonsBox.style.display = "none";
 }
 
-    });
-}
 </script>
 
 </body>
