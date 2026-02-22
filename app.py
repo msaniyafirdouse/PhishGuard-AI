@@ -3,6 +3,9 @@ import joblib
 import re
 import numpy as np
 import os
+import whois
+from urllib.parse import urlparse
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -33,6 +36,23 @@ def extract_features(url):
 
     return np.array(list(features.values())).reshape(1, -1)
 
+def get_domain_age(url):
+    try:
+        domain = urlparse(url).netloc
+        domain_info = whois.whois(domain)
+
+        creation_date = domain_info.creation_date
+
+        if isinstance(creation_date, list):
+            creation_date = creation_date[0]
+
+        if creation_date:
+            age_days = (datetime.now() - creation_date).days
+            return age_days
+        else:
+            return None
+    except:
+        return None
 
 @app.route("/")
 def home():
@@ -74,6 +94,17 @@ def analyze():
 
     if re.search(r"\d+\.\d+\.\d+\.\d+", url):
         risk_score = max(risk_score, 90)
+
+    # Domain age check
+    domain_age = get_domain_age(url)
+
+    if domain_age is not None:
+        if domain_age < 30:
+            risk_score += 20
+            reasons.append("Domain is very newly registered (less than 30 days).")
+        elif domain_age < 90:
+            risk_score += 10
+            reasons.append("Domain is recently registered (less than 90 days).")
 
     if risk_score < 35:
         classification = "Safe"
