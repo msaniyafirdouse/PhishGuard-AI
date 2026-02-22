@@ -9,13 +9,20 @@
 body {
     margin: 0;
     font-family: 'Segoe UI', sans-serif;
-    background: radial-gradient(circle at 20% 20%, #111827, #000000 70%);
+    background: linear-gradient(135deg, #0f172a, #111827, #000000);
+    background-size: 300% 300%;
+    animation: gradientMove 8s ease infinite;
     color: white;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    overflow: hidden;
+}
+
+@keyframes gradientMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 /* Subtle red glow background */
@@ -41,6 +48,24 @@ body::before {
     backdrop-filter: blur(30px);
     border: 1px solid rgba(255,255,255,0.1);
     box-shadow: 0 0 50px rgba(255,0,60,0.1);
+    position: relative;
+    overflow: hidden;
+    .container::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(120deg, transparent, rgba(255,255,255,0.05), transparent);
+    transform: rotate(25deg);
+    animation: shine 6s linear infinite;
+}
+
+@keyframes shine {
+    0% { transform: translateX(-100%) rotate(25deg); }
+    100% { transform: translateX(100%) rotate(25deg); }
+}
 }
 
 h1 {
@@ -182,7 +207,7 @@ function analyze() {
     const emailText = document.getElementById("emailText").value;
     const url = document.getElementById("urlInput").value;
 
-    fetch("https://phishguard-ai-2j9t.onrender.com/analyze", {
+    fetch("/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -200,23 +225,38 @@ function analyze() {
 
         meterContainer.style.display = "block";
 
-        const degree = data.risk_score * 3.6;
-        circle.style.background = `conic-gradient(#ef4444 ${degree}deg, #1f2937 ${degree}deg)`;
-
         percent.innerText = data.risk_score + "%";
+
+        let color = "#22c55e"; // default green
 
         if (data.classification === "Safe") {
             classification.innerText = "Safe";
             classification.style.color = "#22c55e";
-        } else if (data.classification === "Suspicious") {
+            color = "#22c55e";
+        } 
+        else if (data.classification === "Suspicious") {
             classification.innerText = "Suspicious";
             classification.style.color = "#facc15";
-        } else {
+            color = "#facc15";
+        } 
+        else {
             classification.innerText = "Phishing";
             classification.style.color = "#ef4444";
+            color = "#ef4444";
         }
 
-        // Show Explainable AI
+        const degree = data.risk_score * 3.6;
+        circle.style.background = `conic-gradient(${color} ${degree}deg, #1f2937 ${degree}deg)`;
+
+        // ---- Show Probabilities ----
+        classification.innerHTML += `
+            <div style="font-size:14px; margin-top:10px; color:#9ca3af;">
+                Email Prob: ${data.email_probability}<br>
+                URL Prob: ${data.url_probability}
+            </div>
+        `;
+
+        // ---- Explainable AI ----
         const analysisBox = document.getElementById("analysisBox");
         const reasonsList = document.getElementById("reasonsList");
 
