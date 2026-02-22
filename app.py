@@ -75,11 +75,29 @@ def analyze():
     url_prob = url_model.predict_proba(url_features)[0][1]
 
     
-    # Dynamic weighting logic
-    if url_prob > 0.7:
-        risk_score = int((email_prob * 30) + (url_prob * 70))
+    # # Dynamic weighting logic
+    # if url_prob > 0.7:
+    #     risk_score = int((email_prob * 30) + (url_prob * 70))
+    # else:
+    #     risk_score = int((email_prob * 60) + (url_prob * 40))
+
+    # Independent scoring logic
+
+    if email_text.strip() and url.strip():
+     # Both provided
+        risk_score = int((email_prob * 50) + (url_prob * 50))
+
+    elif email_text.strip() and not url.strip():
+        # Only text provided
+        risk_score = int(email_prob * 100)
+
+    elif url.strip() and not email_text.strip():
+        # Only URL provided
+        risk_score = int(url_prob * 100)
+
     else:
-        risk_score = int((email_prob * 60) + (url_prob * 40))
+        risk_score = 0
+
 
     # Rule-based override system
     strong_phishing_patterns = [
