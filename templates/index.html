@@ -448,6 +448,13 @@ input::placeholder {
     box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
 }
 
+/* Active state for documentation button */
+.btn-secondary.active {
+    border-color: var(--cyber-red);
+    color: var(--cyber-red);
+    box-shadow: 0 0 15px rgba(255, 45, 45, 0.1);
+}
+
 /* Results Section */
 .results-section {
     display: none;
@@ -924,7 +931,7 @@ input::placeholder {
 
                 <div class="button-group">
                     <button class="btn btn-primary" onclick="analyze()">Scan & Analyze</button>
-                    <button class="btn btn-secondary">Documentation</button>
+                    <button class="btn btn-secondary" id="docBtn" onclick="toggleDocumentation()">Documentation</button>
                 </div>
             </div>
 
@@ -1024,7 +1031,32 @@ window.addEventListener('resize', () => {
     canvas.height = window.innerHeight;
 });
 
-// Original analyze function - UNCHANGED
+// Toggle Documentation Function
+function toggleDocumentation() {
+    const analysisBox = document.getElementById("analysisBox");
+    const docBtn = document.getElementById("docBtn");
+    const reasonsList = document.getElementById("reasonsList");
+
+    // Only toggle if there is content
+    if (reasonsList.innerHTML.trim() !== "") {
+        if (analysisBox.style.display === "none" || analysisBox.style.display === "") {
+            analysisBox.style.display = "block";
+            docBtn.classList.add("active");
+            docBtn.innerText = "Hide Report";
+            
+            // Smooth scroll to the report
+            setTimeout(() => {
+                analysisBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        } else {
+            analysisBox.style.display = "none";
+            docBtn.classList.remove("active");
+            docBtn.innerText = "Documentation";
+        }
+    }
+}
+
+// Original analyze function - MODIFIED to prepare for Documentation button
 function analyze() {
     const emailText = document.getElementById("emailText").value;
     const url = document.getElementById("urlInput").value;
@@ -1045,6 +1077,9 @@ function analyze() {
         const classification = document.getElementById("classification");
         const emailProb = document.getElementById("emailProb");
         const urlProb = document.getElementById("urlProb");
+        const analysisBox = document.getElementById("analysisBox");
+        const reasonsList = document.getElementById("reasonsList");
+        const docBtn = document.getElementById("docBtn");
 
         resultsSection.style.display = "block";
         percent.innerText = data.risk_score + "%";
@@ -1069,20 +1104,25 @@ function analyze() {
         emailProb.innerText = data.email_probability;
         urlProb.innerText = data.url_probability;
 
-        const analysisBox = document.getElementById("analysisBox");
-        const reasonsList = document.getElementById("reasonsList");
-
         reasonsList.innerHTML = "";
 
         if (data.reasons && data.reasons.length > 0) {
-            analysisBox.style.display = "block";
             data.reasons.forEach(reason => {
                 const li = document.createElement("li");
                 li.innerText = reason;
                 reasonsList.appendChild(li);
             });
+            
+            // Reset Documentation button state but don't show the box automatically
+            analysisBox.style.display = "none";
+            docBtn.classList.remove("active");
+            docBtn.innerText = "Documentation";
+            docBtn.style.opacity = "1";
+            docBtn.style.cursor = "pointer";
         } else {
             analysisBox.style.display = "none";
+            docBtn.style.opacity = "0.5";
+            docBtn.style.cursor = "not-allowed";
         }
 
         setTimeout(() => {
