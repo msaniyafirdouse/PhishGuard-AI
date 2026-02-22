@@ -59,6 +59,85 @@ def home():
     return render_template("index.html")
 
 
+# @app.route("/analyze", methods=["POST"])
+# def analyze():
+#     data = request.json
+
+#     email_text = data.get("email_text", "")
+#     url = data.get("url", "")
+
+#     # Email prediction
+#     email_vector = tfidf.transform([email_text])
+#     email_prob = email_model.predict_proba(email_vector)[0][1]
+
+#     # URL prediction
+#     url_features = extract_features(url)
+#     url_prob = url_model.predict_proba(url_features)[0][1]
+
+    
+#     # # Dynamic weighting logic
+#     # if url_prob > 0.7:
+#     #     risk_score = int((email_prob * 30) + (url_prob * 70))
+#     # else:
+#     #     risk_score = int((email_prob * 60) + (url_prob * 40))
+
+#     # Independent scoring logic
+
+#     if email_text.strip() and url.strip():
+#      # Both provided
+#         risk_score = int((email_prob * 50) + (url_prob * 50))
+
+#     elif email_text.strip() and not url.strip():
+#         # Only text provided
+#         risk_score = int(email_prob * 100)
+
+#     elif url.strip() and not email_text.strip():
+#         # Only URL provided
+#         risk_score = int(url_prob * 100)
+
+#     else:
+#         risk_score = 0
+
+
+#     # Rule-based override system
+#     strong_phishing_patterns = [
+#     "verify-login",
+#     "account-update",
+#     "secure-bank",
+#     "password-reset"
+#     ]
+
+#     if any(pattern in url.lower() for pattern in strong_phishing_patterns):
+#         risk_score = max(risk_score, 85)
+
+#     if re.search(r"\d+\.\d+\.\d+\.\d+", url):
+#         risk_score = max(risk_score, 90)
+
+#     # Domain age check
+#     domain_age = get_domain_age(url)
+
+#     if domain_age is not None:
+#         if domain_age < 30:
+#             risk_score += 20
+#             reasons.append("Domain is very newly registered (less than 30 days).")
+#         elif domain_age < 90:
+#             risk_score += 10
+#             reasons.append("Domain is recently registered (less than 90 days).")
+
+#     if risk_score < 35:
+#         classification = "Safe"
+#     elif risk_score < 65:
+#         classification = "Suspicious"
+#     else:
+#         classification = "Phishing"
+
+#     return jsonify({
+#         "email_probability": round(float(email_prob), 2),
+#         "url_probability": round(float(url_prob), 2),
+#         "risk_score": risk_score,
+#         "classification": classification
+#     })
+
 @app.route("/analyze", methods=["POST"])
 def analyze():
     data = request.json
@@ -66,67 +145,79 @@ def analyze():
     email_text = data.get("email_text", "")
     url = data.get("url", "")
 
-    # Email prediction
-    email_vector = tfidf.transform([email_text])
-    email_prob = email_model.predict_proba(email_vector)[0][1]
+    reasons = []
 
-    # URL prediction
-    url_features = extract_features(url)
-    url_prob = url_model.predict_proba(url_features)[0][1]
+    # ----------------------------
+    # Email prediction (only if provided)
+    # ----------------------------
+    if email_text.strip():
+        email_vector = tfidf.transform([email_text])
+        email_prob = email_model.predict_proba(email_vector)[0][1]
+    else:
+        email_prob = 0
 
-    
-    # # Dynamic weighting logic
-    # if url_prob > 0.7:
-    #     risk_score = int((email_prob * 30) + (url_prob * 70))
-    # else:
-    #     risk_score = int((email_prob * 60) + (url_prob * 40))
+    # ----------------------------
+    # URL prediction (only if provided)
+    # ----------------------------
+    if url.strip():
+        url_features = extract_features(url)
+        url_prob = url_model.predict_proba(url_features)[0][1]
+    else:
+        url_prob = 0
 
+    # ----------------------------
     # Independent scoring logic
-
+    # ----------------------------
     if email_text.strip() and url.strip():
-     # Both provided
         risk_score = int((email_prob * 50) + (url_prob * 50))
-
-    elif email_text.strip() and not url.strip():
-        # Only text provided
+    elif email_text.strip():
         risk_score = int(email_prob * 100)
-
-    elif url.strip() and not email_text.strip():
-        # Only URL provided
+    elif url.strip():
         risk_score = int(url_prob * 100)
-
     else:
         risk_score = 0
 
-
+    # ----------------------------
     # Rule-based override system
+    # ----------------------------
     strong_phishing_patterns = [
-    "verify-login",
-    "account-update",
-    "secure-bank",
-    "password-reset"
+        "verify-login",
+        "account-update",
+        "secure-bank",
+        "password-reset"
     ]
 
     if any(pattern in url.lower() for pattern in strong_phishing_patterns):
         risk_score = max(risk_score, 85)
+        reasons.append("Strong phishing pattern detected in URL.")
 
     if re.search(r"\d+\.\d+\.\d+\.\d+", url):
         risk_score = max(risk_score, 90)
+        reasons.append("URL contains IP address instead of domain name.")
 
-    # Domain age check
-    domain_age = get_domain_age(url)
+    # ----------------------------
+    # Domain Age Intelligence
+    # ----------------------------
+    if url.strip():
+        domain_age = get_domain_age(url)
 
-    if domain_age is not None:
-        if domain_age < 30:
-            risk_score += 20
-            reasons.append("Domain is very newly registered (less than 30 days).")
-        elif domain_age < 90:
-            risk_score += 10
-            reasons.append("Domain is recently registered (less than 90 days).")
+        if domain_age is not None:
+            if domain_age < 30:
+                risk_score += 20
+                reasons.append("Domain is very newly registered (<30 days).")
+            elif domain_age < 90:
+                risk_score += 10
+                reasons.append("Domain is recently registered (<90 days).")
 
-    if risk_score < 35:
+    # Cap risk score at 100
+    risk_score = min(risk_score, 100)
+
+    # ----------------------------
+    # Classification
+    # ----------------------------
+    if risk_score < 40:
         classification = "Safe"
-    elif risk_score < 65:
+    elif risk_score < 70:
         classification = "Suspicious"
     else:
         classification = "Phishing"
@@ -135,9 +226,9 @@ def analyze():
         "email_probability": round(float(email_prob), 2),
         "url_probability": round(float(url_prob), 2),
         "risk_score": risk_score,
-        "classification": classification
+        "classification": classification,
+        "reasons": reasons
     })
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
