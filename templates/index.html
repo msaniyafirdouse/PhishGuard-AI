@@ -37,7 +37,7 @@ body {
     min-height: 100vh;
 }
 
-/* Premium Background - Minimal */
+/* Cybersecurity Network Background */
 .bg-elements {
     position: fixed;
     top: 0;
@@ -46,7 +46,49 @@ body {
     height: 100%;
     z-index: 0;
     pointer-events: none;
+    overflow: hidden;
 }
+
+/* Animated Network Lines */
+.network-lines {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image:
+        linear-gradient(rgba(201, 169, 97, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201, 169, 97, 0.05) 1px, transparent 1px);
+    background-size: 120px 120px;
+    animation: moveGrid 20s linear infinite;
+}
+
+@keyframes moveGrid {
+    from { background-position: 0 0; }
+    to { background-position: 120px 120px; }
+}
+
+/* Floating Data Pulses */
+.data-pulse {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 15px var(--accent);
+    opacity: 0.6;
+    animation: pulseMove 12s linear infinite;
+}
+
+.data-pulse:nth-child(2) { left: 20%; animation-delay: 2s; }
+.data-pulse:nth-child(3) { left: 60%; animation-delay: 4s; }
+.data-pulse:nth-child(4) { left: 80%; animation-delay: 6s; }
+
+@keyframes pulseMove {
+    0% { top: 100%; opacity: 0; }
+    10% { opacity: 0.8; }
+    50% { opacity: 0.5; }
+    100% { top: -10%; opacity: 0; }
+}
+
 
 /* Subtle Gradient Orbs */
 .gradient-orb {
@@ -116,12 +158,36 @@ nav {
 }
 
 .logo {
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 600;
     letter-spacing: 2px;
     font-family: 'Cormorant Garamond', serif;
-    color: var(--text-light);
     text-transform: uppercase;
+    color: var(--text-light);
+    position: relative;
+    cursor: default;
+}
+
+.logo .accent-text {
+    color: var(--accent);
+    position: relative;
+}
+
+/* Subtle underline animation */
+.logo::after {
+    content: "";
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 40%;
+    height: 1px;
+    background: var(--accent);
+    transition: width 0.4s ease;
+    opacity: 0.6;
+}
+
+.logo:hover::after {
+    width: 100%;
 }
 
 .logo span {
@@ -605,17 +671,20 @@ input::placeholder {
 
 <body>
 
-<!-- Premium Background -->
+<!-- Cyber Network Background -->
 <div class="bg-elements">
-    <div class="gradient-orb orb-1"></div>
-    <div class="gradient-orb orb-2"></div>
-    <div class="subtle-grid"></div>
+    <div class="network-lines"></div>
+    <div class="data-pulse"></div>
+    <div class="data-pulse"></div>
+    <div class="data-pulse"></div>
+    <div class="data-pulse"></div>
 </div>
 
 <!-- Navigation -->
 <nav>
-    <div class="logo"><span>🛡</span>PhishGuard</div>
-    <ul>
+<div class="logo">
+    Phish<span class="accent-text">Guard</span>
+</div>    <ul>
         <li><a href="#features">Solutions</a></li>
         <li><a href="#about">Security</a></li>
         <li><a href="#contact">Contact</a></li>
@@ -626,8 +695,10 @@ input::placeholder {
 <div class="container">
     <div class="hero">
         <div class="hero-content">
-            <h1>Protect Against <span class="highlight">Phishing</span> Threats</h1>
-            <p class="subtitle">Enterprise-grade threat detection powered by advanced AI. Analyze emails, SMS, and URLs with precision-engineered security.</p>
+            <h1>AI-Driven <span class="highlight">Phishing Detection</span></h1>
+<p class="subtitle">
+Hybrid machine learning and rule-based intelligence to detect phishing emails, malicious URLs, and social engineering attempts in real time.
+</p>
 
             <div class="input-container">
                 <div class="input-group">
@@ -674,23 +745,24 @@ input::placeholder {
 
     <!-- Features Section -->
     <section class="features-section" id="features">
-        <h2 class="section-title">Why Enterprise Leaders Choose PhishGuard</h2>
+<h2 class="section-title">Core Detection Capabilities</h2>
         <div class="features-grid">
             <div class="feature-card">
                 <div class="feature-icon">⚙️</div>
-                <h4>Precision Detection</h4>
-                <p>Advanced machine learning algorithms analyze behavioral patterns, sender authenticity, and content structure with institutional-grade accuracy.</p>
+                <h4>Hybrid Risk Scoring Engine</h4>
+                <p>Combines machine learning probabilities, URL structure analysis, and domain intelligence to generate an adaptive 0–100 risk score.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">⚡</div>
-                <h4>Real-Time Intelligence</h4>
-                <p>Sub-millisecond threat assessment across email, SMS, and URL channels. Immediate risk scoring with actionable threat intelligence.</p>
+                <h4>Domain Age & Pattern Analysis</h4>
+                <p>Evaluates domain registration age, suspicious URL patterns, and structural anomalies commonly used in phishing campaigns.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">📈</div>
-                <h4>Explainable Security</h4>
-                <p>Transparent AI analysis reveals exact threat indicators and risk factors. Understand every detection with comprehensive intelligence reporting.</p>
-            </div>
+                <h4>Explainable Threat Intelligence</h4>
+<p>
+Provides transparent reasoning behind every detection decision, highlighting specific indicators that contribute to the final risk score.
+</p>
         </div>
     </section>
 </div>
