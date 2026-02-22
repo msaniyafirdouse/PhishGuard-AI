@@ -54,12 +54,30 @@ def analyze():
     url_features = extract_features(url)
     url_prob = url_model.predict_proba(url_features)[0][1]
 
-    # Hybrid risk score
-    risk_score = int((email_prob * 50) + (url_prob * 50))
+    
+    # Dynamic weighting logic
+    if url_prob > 0.7:
+        risk_score = int((email_prob * 30) + (url_prob * 70))
+    else:
+        risk_score = int((email_prob * 60) + (url_prob * 40))
 
-    if risk_score < 30:
+    # Rule-based override system
+    strong_phishing_patterns = [
+    "verify-login",
+    "account-update",
+    "secure-bank",
+    "password-reset"
+    ]
+
+    if any(pattern in url.lower() for pattern in strong_phishing_patterns):
+        risk_score = max(risk_score, 85)
+
+    if re.search(r"\d+\.\d+\.\d+\.\d+", url):
+        risk_score = max(risk_score, 90)
+
+    if risk_score < 35:
         classification = "Safe"
-    elif risk_score < 70:
+    elif risk_score < 65:
         classification = "Suspicious"
     else:
         classification = "Phishing"
