@@ -153,6 +153,13 @@ def analyze():
     if email_text.strip():
         email_vector = tfidf.transform([email_text])
         email_prob = email_model.predict_proba(email_vector)[0][1]
+
+        if email_prob > 0.75:
+            reasons.append("Email content shows strong phishing indicators based on linguistic patterns.")
+        elif email_prob > 0.45:
+            reasons.append("Email content contains moderately suspicious language patterns.")
+        else:
+            reasons.append("No significant phishing language detected in the message content.")
     else:
         email_prob = 0
 
@@ -162,6 +169,13 @@ def analyze():
     if url.strip():
         url_features = extract_features(url)
         url_prob = url_model.predict_proba(url_features)[0][1]
+
+        if url_prob > 0.75:
+             reasons.append("URL structure strongly matches known phishing patterns.")
+        elif url_prob > 0.45:
+            reasons.append("URL contains moderately suspicious structural characteristics.")
+        else:
+            reasons.append("URL structure appears legitimate with no major phishing indicators.")
     else:
         url_prob = 0
 
@@ -189,12 +203,10 @@ def analyze():
 
     if any(pattern in url.lower() for pattern in strong_phishing_patterns):
         risk_score = max(risk_score, 85)
-        reasons.append("Strong phishing pattern detected in URL.")
-
+        reasons.append("URL contains terms frequently observed in phishing campaigns; this increases risk but is not independently conclusive.")
     if re.search(r"\d+\.\d+\.\d+\.\d+", url):
         risk_score = max(risk_score, 90)
-        reasons.append("URL contains IP address instead of domain name.")
-
+        reasons.append("Use of a raw IP address instead of a domain name is often correlated with malicious activity.") 
     # ----------------------------
     # Domain Age Intelligence
     # ----------------------------
@@ -208,7 +220,8 @@ def analyze():
             elif domain_age < 90:
                 risk_score += 10
                 reasons.append("Domain is recently registered (<90 days).")
-
+            else:
+                reasons.append("Domain has been registered for a significant period, reducing phishing likelihood.")
     # Cap risk score at 100
     risk_score = min(risk_score, 100)
 
@@ -222,9 +235,18 @@ def analyze():
     else:
         classification = "Phishing"
 
+    # Final AI reasoning summary
+    if classification == "Safe":
+        reasons.insert(0, "Overall analysis indicates low phishing probability based on combined ML and rule-based evaluation.")
+    elif classification == "Suspicious":
+        reasons.insert(0, "Combined machine learning signals and heuristic checks indicate moderate phishing risk.")
+    else:
+        reasons.insert(0, "High confidence phishing indicators detected from multiple intelligence layers.")
+    
+    
     return jsonify({
-        "email_probability": round(float(email_prob), 2),
-        "url_probability": round(float(url_prob), 2),
+        "email_probability": str(int(email_prob * 100)) + "%",
+        "url_probability": str(int(url_prob * 100)) + "%",
         "risk_score": risk_score,
         "classification": classification,
         "reasons": reasons
