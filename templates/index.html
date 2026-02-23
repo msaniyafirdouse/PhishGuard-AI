@@ -67,7 +67,7 @@ body {
 }
 
 /* Animated Grid - Subtle White Lines */
-.cyber-grid {
+/* .cyber-grid {
     position: absolute;
     width: 200%;
     height: 200%;
@@ -76,6 +76,18 @@ body {
         linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
     background-size: 80px 80px;
     animation: gridMove 30s linear infinite;
+} */
+
+.cyber-grid {
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    background-image:
+        linear-gradient(rgba(255, 45, 45, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 45, 45, 0.04) 1px, transparent 1px);
+    background-size: 100px 100px;
+    animation: gridMove 60s linear infinite;
+    opacity: 0.8;
 }
 
 @keyframes gridMove {
@@ -199,7 +211,7 @@ nav ul {
     gap: 50px;
 }
 
-nav a {
+/* nav a {
     text-decoration: none;
     color: var(--text-secondary);
     font-size: 12px;
@@ -209,6 +221,50 @@ nav a {
     font-family: 'Orbitron', sans-serif;
     transition: all 0.3s ease;
     position: relative;
+} */
+
+
+nav a {
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: 'Orbitron', sans-serif;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+/* Underline animation */
+nav a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -6px;
+    width: 0%;
+    height: 1px;
+    background: var(--cyber-red);
+    box-shadow: 0 0 8px var(--cyber-red-glow);
+    transition: width 0.3s ease;
+}
+
+/* Hover effect */
+nav a:hover {
+    color: var(--text-primary);
+}
+
+nav a:hover::after {
+    width: 100%;
+}
+
+/* Active link style */
+nav a.active {
+    color: var(--text-primary);
+}
+
+nav a.active::after {
+    width: 100%;
 }
 
 nav a::before {
@@ -300,7 +356,7 @@ h1 .highlight {
 }
 
 /* Terminal Style Input Section */
-.input-container {
+/* .input-container {
     background: rgba(5, 5, 5, 0.95);
     border: 1px solid var(--border-subtle);
     border-radius: 2px;
@@ -310,7 +366,24 @@ h1 .highlight {
     animation: fadeInUp 1s ease 0.6s both;
     position: relative;
     overflow: hidden;
+} */
+
+
+.input-container {
+    background: rgba(5, 5, 5, 0.95);
+    border: 1px solid rgba(255, 45, 45, 0.25);
+    border-radius: 6px;
+    padding: 50px;
+    margin-bottom: 60px;
+    backdrop-filter: blur(15px);
+    animation: fadeInUp 1s ease 0.6s both;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+        0 0 60px rgba(255, 45, 45, 0.06),
+        inset 0 0 40px rgba(255, 45, 45, 0.02);
 }
+
 
 .input-container::before {
     content: "";
@@ -357,7 +430,7 @@ h1 .highlight {
     text-shadow: 0 0 10px var(--cyber-red-glow);
 }
 
-textarea, input {
+/* textarea, input {
     width: 100%;
     padding: 18px 22px;
     border-radius: 2px;
@@ -368,15 +441,38 @@ textarea, input {
     font-family: 'Share Tech Mono', monospace;
     transition: all 0.3s ease;
     resize: none;
+} */
+
+
+textarea, input {
+    width: 100%;
+    padding: 18px 22px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 45, 45, 0.25);
+    background: rgba(0, 0, 0, 0.85);
+    color: var(--text-primary);
+    font-size: 15px;
+    font-family: 'Share Tech Mono', monospace;
+    transition: all 0.3s ease;
+    resize: none;
 }
 
-textarea:focus, input:focus {
+/* textarea:focus, input:focus {
     outline: none;
     border-color: rgba(255, 45, 45, 0.3);
     background: rgba(0, 0, 0, 0.9);
     box-shadow: 
         0 0 15px rgba(255, 45, 45, 0.08),
-        inset 0 0 15px rgba(255, 45, 45, 0.02);
+        inset 0 0 15px rgba(255, 45, 45, 0.02); 
+}*/
+
+textarea:focus, input:focus {
+    outline: none;
+    border-color: var(--cyber-red);
+    background: rgba(0, 0, 0, 0.95);
+    box-shadow:
+        0 0 25px rgba(255, 45, 45, 0.15),
+        inset 0 0 20px rgba(255, 45, 45, 0.05);
 }
 
 textarea::placeholder,
@@ -903,10 +999,9 @@ input::placeholder {
         Phish<span class="accent-text">Guard</span>
     </div>
     <ul>
-        <li><a href="#features">Solutions</a></li>
-        <li><a href="#about">Security</a></li>
-        <li><a href="#contact">Contact</a></li>
-    </ul>
+    <li><a href="#features">Solutions</a></li>
+    <li><a href="#resultsSection">Live Demo</a></li>
+</ul>
 </nav>
 
 <!-- Hero Section -->
@@ -1130,6 +1225,30 @@ function analyze() {
         }, 300);
     });
 }
+
+// Active navbar highlight on scroll
+const sections = document.querySelectorAll("section");
+const navLinks = document.querySelectorAll("nav a");
+
+window.addEventListener("scroll", () => {
+    let current = "";
+
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop - 150;
+        const sectionHeight = section.clientHeight;
+
+        if (scrollY >= sectionTop && scrollY < sectionTop + sectionHeight) {
+            current = section.getAttribute("id");
+        }
+    });
+
+    navLinks.forEach(link => {
+        link.classList.remove("active");
+        if (link.getAttribute("href") === "#" + current) {
+            link.classList.add("active");
+        }
+    });
+});
 
 </script>
 

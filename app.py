@@ -138,6 +138,8 @@ def home():
 #         "classification": classification
 #     })
 
+# 
+
 @app.route("/analyze", methods=["POST"])
 def analyze():
     data = request.json
@@ -148,39 +150,25 @@ def analyze():
     reasons = []
 
     # ----------------------------
-    # Email prediction (only if provided)
+    # EMAIL ML PREDICTION
     # ----------------------------
     if email_text.strip():
         email_vector = tfidf.transform([email_text])
         email_prob = email_model.predict_proba(email_vector)[0][1]
-
-        if email_prob > 0.75:
-            reasons.append("Email content shows strong phishing indicators based on linguistic patterns.")
-        elif email_prob > 0.45:
-            reasons.append("Email content contains moderately suspicious language patterns.")
-        else:
-            reasons.append("No significant phishing language detected in the message content.")
     else:
         email_prob = 0
 
     # ----------------------------
-    # URL prediction (only if provided)
+    # URL ML PREDICTION
     # ----------------------------
     if url.strip():
         url_features = extract_features(url)
         url_prob = url_model.predict_proba(url_features)[0][1]
-
-        if url_prob > 0.75:
-             reasons.append("URL structure strongly matches known phishing patterns.")
-        elif url_prob > 0.45:
-            reasons.append("URL contains moderately suspicious structural characteristics.")
-        else:
-            reasons.append("URL structure appears legitimate with no major phishing indicators.")
     else:
         url_prob = 0
 
     # ----------------------------
-    # Independent scoring logic
+    # HYBRID RISK SCORING
     # ----------------------------
     if email_text.strip() and url.strip():
         risk_score = int((email_prob * 50) + (url_prob * 50))
@@ -192,7 +180,55 @@ def analyze():
         risk_score = 0
 
     # ----------------------------
-    # Rule-based override system
+    # CONTENT-BASED EMAIL SIGNAL DETECTION
+    # ----------------------------
+    email_lower = email_text.lower()
+
+    urgency_words = ["urgent", "immediately", "within 24 hours", "act now", "limited time"]
+    credential_words = ["verify", "password", "login", "update", "account", "bank"]
+    threat_words = ["suspended", "locked", "restricted", "terminated"]
+
+    if any(word in email_lower for word in urgency_words):
+        reasons.append("Message contains urgency-based language designed to pressure quick action.")
+
+    if any(word in email_lower for word in credential_words):
+        reasons.append("Email requests account-related action such as login, verification, or password update.")
+
+    if any(word in email_lower for word in threat_words):
+        reasons.append("Message includes warning or threat-based language (e.g., account suspension).")
+
+    if email_text.strip() and not any(word in email_lower for word in urgency_words + credential_words + threat_words):
+        reasons.append("Message tone appears informational without urgency or credential request patterns.")
+
+    # ----------------------------
+    # URL STRUCTURAL ANALYSIS
+    # ----------------------------
+    if url.strip():
+        parsed = urlparse(url)
+
+        if re.search(r"\d+\.\d+\.\d+\.\d+", url):
+            reasons.append("URL uses a raw IP address instead of a domain name.")
+
+        if any(word in url.lower() for word in ["login", "verify", "update", "secure"]):
+            reasons.append("URL contains account-related keywords commonly seen in phishing attempts.")
+
+        if url.startswith("http://"):
+            reasons.append("URL does not use secure HTTPS protocol.")
+
+        if url.startswith("https://"):
+            reasons.append("URL uses HTTPS protocol.")
+
+        if parsed.netloc and len(parsed.netloc.split(".")) >= 3:
+            reasons.append("URL contains multiple subdomains, which may indicate obfuscation.")
+
+        if not any([
+            re.search(r"\d+\.\d+\.\d+\.\d+", url),
+            any(word in url.lower() for word in ["login", "verify", "update", "secure"])
+        ]):
+            reasons.append("No obvious structural anomalies detected in the URL.")
+
+    # ----------------------------
+    # RULE-BASED RISK BOOST
     # ----------------------------
     strong_phishing_patterns = [
         "verify-login",
@@ -203,30 +239,15 @@ def analyze():
 
     if any(pattern in url.lower() for pattern in strong_phishing_patterns):
         risk_score = max(risk_score, 85)
-        reasons.append("URL contains terms frequently observed in phishing campaigns; this increases risk but is not independently conclusive.")
+
     if re.search(r"\d+\.\d+\.\d+\.\d+", url):
         risk_score = max(risk_score, 90)
-        reasons.append("Use of a raw IP address instead of a domain name is often correlated with malicious activity.") 
-    # ----------------------------
-    # Domain Age Intelligence
-    # ----------------------------
-    if url.strip():
-        domain_age = get_domain_age(url)
 
-        if domain_age is not None:
-            if domain_age < 30:
-                risk_score += 20
-                reasons.append("Domain is very newly registered (<30 days).")
-            elif domain_age < 90:
-                risk_score += 10
-                reasons.append("Domain is recently registered (<90 days).")
-            else:
-                reasons.append("Domain has been registered for a significant period, reducing phishing likelihood.")
-    # Cap risk score at 100
+    # Cap risk score
     risk_score = min(risk_score, 100)
 
     # ----------------------------
-    # Classification
+    # CLASSIFICATION
     # ----------------------------
     if risk_score < 40:
         classification = "Safe"
@@ -235,15 +256,10 @@ def analyze():
     else:
         classification = "Phishing"
 
-    # Final AI reasoning summary
-    if classification == "Safe":
-        reasons.insert(0, "Overall analysis indicates low phishing probability based on combined ML and rule-based evaluation.")
-    elif classification == "Suspicious":
-        reasons.insert(0, "Combined machine learning signals and heuristic checks indicate moderate phishing risk.")
-    else:
-        reasons.insert(0, "High confidence phishing indicators detected from multiple intelligence layers.")
-    
-    
+    # If absolutely nothing triggered
+    if not reasons:
+        reasons.append("No suspicious indicators detected from content or URL analysis.")
+
     return jsonify({
         "email_probability": str(int(email_prob * 100)) + "%",
         "url_probability": str(int(url_prob * 100)) + "%",
